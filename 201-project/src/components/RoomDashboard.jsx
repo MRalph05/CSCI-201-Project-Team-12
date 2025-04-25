@@ -1,7 +1,7 @@
 import React from "react";
 import "../dashboard.css";
 
-const RoomDashboard = ({ rooms, onSelectRoom }) => {
+const RoomDashboard = ({ rooms, onSelectRoom, updateRoom, deleteRoom }) => {
   return (
     <div className="dashboard-container">
       <h2 className="dashboard-title">Room Dashboard</h2>
@@ -12,8 +12,23 @@ const RoomDashboard = ({ rooms, onSelectRoom }) => {
             <p>Leader: {room.leader}</p>
           </div>
           <div className="card-actions">
-            <button className="dashboard-button" onClick={() => onSelectRoom(room)}>
+            <button
+              className="complete-btn"
+              onClick={() => onSelectRoom(room)}
+            >
               View Tasks
+            </button>
+            <button
+              className="assign-btn"
+              onClick={() => updateRoom(room)}
+            >
+              Edit
+            </button>
+            <button
+              className="edit-btn"
+              onClick={() => deleteRoom(room.id)}
+            >
+              Delete
             </button>
           </div>
         </div>
