@@ -1,0 +1,94 @@
+.navbar {
+    background-color: #1f2937;
+    padding: 1rem 2rem;
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .navbar a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+  }
+  
+  .navbar a:hover {
+    background-color: #374151;
+  }
+  
+  /* Active link style */
+  .navbar a.active {
+    background-color: #2563eb;
+  }
+
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f3f4f6;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .dashboard-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dashboard-title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: #1f2937;
+  }
+  
+  .dashboard-button {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .dashboard-button:hover {
+    background-color: #1d4ed8;
+  }
+  
+  .card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9fafb;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+  }
+  
+  .card-actions button {
+    margin-left: 0.5rem;
+    padding: 0.3rem 0.7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .card-actions .complete-btn {
+    background-color: #16a34a;
+    color: white;
+  }
+  
+  .card-actions .delete-btn {
+    background-color: #dc2626;
+    color: white;
+  }
+  
+  .card-actions button:hover {
+    opacity: 0.9;
+  }
+  
