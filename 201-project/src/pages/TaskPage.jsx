@@ -2,7 +2,7 @@ import React from "react";
 import TaskDashboard from "../components/TaskDashboard";
 
 const TaskPage = () => {
-  const dummyRoom = { id: 999, name: "Dummy Room" };
+  const dummyRoom = { id: "test-room", name: "Dummy Room" };
   return <TaskDashboard room={dummyRoom} />;
 };
 

@@ -1,28 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../dashboard.css";
+import { db } from "../firebase";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  deleteDoc,
+  updateDoc,
+  onSnapshot
+} from "firebase/firestore";
 
 const TaskDashboard = ({ room }) => {
-  const [tasks, setTasks] = useState([
-    { id: 1, name: "Take out trash", description: "Bins by 9PM", assigned: [] },
-    { id: 2, name: "Vacuum", description: "Living room & hall", assigned: [] }
-  ]);
-
+  const [tasks, setTasks] = useState([]);
   const [showForm, setShowForm] = useState(null);
   const [formData, setFormData] = useState({ name: "", email: "" });
 
-  const handleAssign = (taskId) => {
-    const updated = tasks.map(task =>
-      task.id === taskId
-        ? { ...task, assigned: [...(task.assigned || []), formData] }
-        : task
-    );
-    setTasks(updated);
+  const roomTaskCollection = collection(db, "rooms", room.id, "tasks");
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(roomTaskCollection, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTasks(fetched);
+    });
+    return () => unsubscribe();
+  }, [room.id]);
+
+  const handleAssign = async (taskId) => {
+    const taskRef = doc(db, "rooms", room.id, "tasks", taskId);
+    const task = tasks.find(t => t.id === taskId);
+    const updatedAssigned = [...(task.assigned || []), formData];
+    await updateDoc(taskRef, { assigned: updatedAssigned });
     setFormData({ name: "", email: "" });
     setShowForm(null);
   };
 
-  const handleComplete = (taskId) => {
-    setTasks(tasks.filter(task => task.id !== taskId));
+  const handleComplete = async (taskId) => {
+    await deleteDoc(doc(db, "rooms", room.id, "tasks", taskId));
   };
 
   return (
@@ -37,7 +51,9 @@ const TaskDashboard = ({ room }) => {
               <strong>Assigned:</strong>
               <ul>
                 {(task.assigned || []).map((person, idx) => (
-                  <li key={idx}>{person.name} ({person.email})</li>
+                  <li key={idx}>
+                    {typeof person === 'string' ? person : `${person.name} (${person.email})`}
+                  </li>
                 ))}
               </ul>
             </div>
