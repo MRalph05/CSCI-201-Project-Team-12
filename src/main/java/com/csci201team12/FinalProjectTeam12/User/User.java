@@ -2,6 +2,7 @@ package com.csci201team12.FinalProjectTeam12.User;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "UserTable")
 public class User{
     @Id
     private String email;
