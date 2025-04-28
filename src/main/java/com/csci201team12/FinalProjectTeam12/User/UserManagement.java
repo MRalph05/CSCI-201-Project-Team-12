@@ -113,14 +113,95 @@ public class UserManagement {
         }
     }
 
-    void updatePassword(String email, String password) {
+    static boolean updatePassword(String email, String password) {
         // TO DO
         // Replaces user’s former password with new one in database
+        PreparedStatement preparedStatement = null;
+        int update=0;
+        try{
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/UserData", "root", "Iriganlc");
+            String updateSQL = "UPDATE UserTable SET password = ? WHERE username = ?;";
+            preparedStatement= con.prepareStatement(updateSQL);
+            preparedStatement.setString(1,password);
+            preparedStatement.setString(2,email);
+            update= preparedStatement.executeUpdate();
+            if(update==1){
+                try {
+                    if (preparedStatement != null)
+                        preparedStatement.close();
+                    if (con != null)
+                        con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            else{
+                try {
+                    if (preparedStatement != null)
+                        preparedStatement.close();
+                    if (con != null)
+                        con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+
+        }
+        catch(ClassNotFoundException e){
+            e.printStackTrace();
+            return false;
+        }
+        catch(SQLException e){
+            e.printStackTrace();
+            return false;
+        }
     }
 
-    void deleteUser(String email) {
-        // TO DO
-        // Removes the User with the email from the database
+    static boolean deleteUser(String email) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+        int update=0;
+        try{
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/UserData", "root", "Iriganlc");
+            String deleteSQL = "DELETE FROM UserTable WHERE username = ?;";
+            preparedStatement=con.prepareStatement(deleteSQL);
+            preparedStatement.setString(1,email);
+            update=preparedStatement.executeUpdate();
+            if(update==1){
+                try {
+                    if (preparedStatement != null)
+                        preparedStatement.close();
+                    if (con != null)
+                        con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return true;
+            }
+            else{
+                try {
+                    if (preparedStatement != null)
+                        preparedStatement.close();
+                    if (con != null)
+                        con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+        }
+        catch(ClassNotFoundException e){
+            e.printStackTrace();
+            return false;
+        }
+        catch(SQLException e){
+            e.printStackTrace();
+            return false;
+        }
     }
 }
 
