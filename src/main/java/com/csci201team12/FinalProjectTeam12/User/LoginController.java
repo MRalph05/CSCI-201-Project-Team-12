@@ -18,6 +18,14 @@ public class LoginController {
             return "fail";
         }
     }
+    public String update(@RequestParam("username") String username, @RequestParam("password") String password) {
+        if(UserManagement.updatePassword(username, password)){
+            return "success";
+        }
+        else{
+            return "fail";
+        }
+    }
 //    private boolean isValid(String email, String password) {
 //
 //        PreparedStatement preparedStatement = null;
