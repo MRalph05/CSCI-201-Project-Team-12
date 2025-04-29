@@ -1,19 +1,51 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, NavLink } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import RoomPage from "./pages/RoomPage";
 import TaskPage from "./pages/TaskPage";
+import FriendPage from "./pages/FriendPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 import "./dashboard.css";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if user is logged in by looking at localStorage
+    const userEmail = localStorage.getItem("userEmail");
+    if (userEmail) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("userEmail");
+    setIsLoggedIn(false);
+  };
+
   return (
     <Router>
       <nav className="navbar">
-        <NavLink to="/rooms" className={({ isActive }) => isActive ? "active" : ""}>Rooms</NavLink>
-        <NavLink to="/tasks" className={({ isActive }) => isActive ? "active" : ""}>Tasks</NavLink>
+        {isLoggedIn ? (
+          <>
+            <NavLink to="/rooms" className={({ isActive }) => isActive ? "active" : ""}>Rooms</NavLink>
+            <NavLink to="/friends" className={({ isActive }) => isActive ? "active" : ""}>Friends</NavLink>
+            <button onClick={handleLogout} className="logout-btn">Logout</button>
+          </>
+        ) : (
+          <>
+            <NavLink to="/login" className={({ isActive }) => isActive ? "active" : ""}>Login</NavLink>
+            <NavLink to="/register" className={({ isActive }) => isActive ? "active" : ""}>Register</NavLink>
+          </>
+        )}
       </nav>
       <Routes>
-        <Route path="/rooms" element={<RoomPage />} />
-        <Route path="/tasks" element={<TaskPage />} />
+        <Route path="/login" element={isLoggedIn ? <Navigate to="/rooms" /> : <LoginPage setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/register" element={isLoggedIn ? <Navigate to="/rooms" /> : <RegisterPage setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/rooms" element={isLoggedIn ? <RoomPage /> : <Navigate to="/login" />} />
+        <Route path="/tasks/:roomId" element={isLoggedIn ? <TaskPage /> : <Navigate to="/login" />} />
+        <Route path="/friends" element={isLoggedIn ? <FriendPage /> : <Navigate to="/login" />} />
+        <Route path="/" element={<Navigate to={isLoggedIn ? "/rooms" : "/login"} />} />
       </Routes>
     </Router>
   );

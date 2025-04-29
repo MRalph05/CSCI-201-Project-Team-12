@@ -1,68 +1,146 @@
 import React, { useState, useEffect } from "react";
 import "../dashboard.css";
-import { db } from "../firebase";
 import {
-    collection,
-    getDocs,
-    addDoc,
-    doc,
-    deleteDoc,
-    updateDoc,
-    onSnapshot
-} from "firebase/firestore";
+    getTasksByRoomId,
+    getTaskAssignees,
+    assignUserToTask,
+    removeUserFromTask,
+    createTask,
+    updateTask,
+    deleteTask
+} from "../services/api";
 
 const TaskDashboard = ({ room, goBack }) => {
     const [tasks, setTasks] = useState([]);
+    const [assignees, setAssignees] = useState({});
     const [showForm, setShowForm] = useState(null);
     const [formData, setFormData] = useState({ name: "", email: "" });
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newTask, setNewTask] = useState({ name: "", description: "" });
     const [editingTask, setEditingTask] = useState(null);
     const [editTaskForm, setEditTaskForm] = useState({ name: "", description: "" });
+    const [isLoading, setIsLoading] = useState(false);
 
-    const roomTaskCollection = collection(db, "rooms", room.id, "tasks");
-
+    // Fetch tasks when the room changes
     useEffect(() => {
-        const unsubscribe = onSnapshot(roomTaskCollection, (snapshot) => {
-            const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setTasks(fetched);
-        });
-        return () => unsubscribe();
+        const fetchTasks = async () => {
+            try {
+                setIsLoading(true);
+                const tasksData = await getTasksByRoomId(room.id);
+                setTasks(tasksData);
+                
+                // Fetch assignees for each task
+                const assigneesMap = {};
+                for (const task of tasksData) {
+                    const assigneeData = await getTaskAssignees(task.id);
+                    assigneesMap[task.id] = assigneeData;
+                }
+                setAssignees(assigneesMap);
+                
+                setIsLoading(false);
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                setIsLoading(false);
+            }
+        };
+        
+        fetchTasks();
     }, [room.id]);
 
     const handleAssign = async (taskId) => {
-        const taskRef = doc(db, "rooms", room.id, "tasks", taskId);
-        const task = tasks.find(t => t.id === taskId);
-        const assigned = task.assigned || [];
-
-        const alreadyAssigned = assigned.some(p =>
-            typeof p === 'string' ? p === formData.name : p.email === formData.email
-        );
-        if (alreadyAssigned) return alert("This person is already assigned to the task.");
-
-        const updatedAssigned = [...assigned, formData];
-        await updateDoc(taskRef, { assigned: updatedAssigned });
-        setFormData({ name: "", email: "" });
-        setShowForm(null);
+        try {
+            await assignUserToTask(taskId, formData.email);
+            
+            // Update the assignees list
+            const updatedAssignees = await getTaskAssignees(taskId);
+            setAssignees({
+                ...assignees,
+                [taskId]: updatedAssignees
+            });
+            
+            setFormData({ name: "", email: "" });
+            setShowForm(null);
+        } catch (error) {
+            console.error("Error assigning task:", error);
+            alert("Failed to assign user to task.");
+        }
     };
 
-    const handleRemoveAssigned = async (taskId, index) => {
-        const taskRef = doc(db, "rooms", room.id, "tasks", taskId);
-        const task = tasks.find(t => t.id === taskId);
-        const updatedAssigned = [...(task.assigned || [])];
-        updatedAssigned.splice(index, 1);
-        await updateDoc(taskRef, { assigned: updatedAssigned });
+    const handleRemoveAssigned = async (taskId, userEmail) => {
+        try {
+            await removeUserFromTask(taskId, userEmail);
+            
+            // Update the assignees list
+            const updatedAssignees = await getTaskAssignees(taskId);
+            setAssignees({
+                ...assignees,
+                [taskId]: updatedAssignees
+            });
+        } catch (error) {
+            console.error("Error removing assignment:", error);
+            alert("Failed to remove user from task.");
+        }
     };
 
     const handleCreateTask = async () => {
         if (!newTask.name || !newTask.description) return;
-        await addDoc(roomTaskCollection, { ...newTask, assigned: [] });
-        setNewTask({ name: "", description: "" });
-        setShowCreateForm(false);
+        
+        try {
+            const currentUserEmail = localStorage.getItem("userEmail");
+            if (!currentUserEmail) {
+                alert("You must be logged in to create a task");
+                return;
+            }
+            
+            const taskData = {
+                roomId: room.id,
+                name: newTask.name,
+                description: newTask.description,
+                creatorEmail: currentUserEmail,
+                completed: false
+            };
+            
+            await createTask(taskData);
+            
+            // Refresh tasks
+            const tasksData = await getTasksByRoomId(room.id);
+            setTasks(tasksData);
+            
+            setNewTask({ name: "", description: "" });
+            setShowCreateForm(false);
+        } catch (error) {
+            console.error("Error creating task:", error);
+            alert("Failed to create task.");
+        }
     };
 
     const handleComplete = async (taskId) => {
-        await deleteDoc(doc(db, "rooms", room.id, "tasks", taskId));
+        try {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                await updateTask(taskId, { ...task, completed: true });
+                
+                // Refresh tasks
+                const tasksData = await getTasksByRoomId(room.id);
+                setTasks(tasksData);
+            }
+        } catch (error) {
+            console.error("Error completing task:", error);
+            alert("Failed to complete task.");
+        }
+    };
+    
+    const handleDelete = async (taskId) => {
+        try {
+            await deleteTask(taskId);
+            
+            // Refresh tasks
+            const tasksData = await getTasksByRoomId(room.id);
+            setTasks(tasksData);
+        } catch (error) {
+            console.error("Error deleting task:", error);
+            alert("Failed to delete task.");
+        }
     };
 
     const handleEditTask = (task) => {
@@ -71,11 +149,31 @@ const TaskDashboard = ({ room, goBack }) => {
     };
 
     const saveTaskEdits = async (taskId) => {
-        const taskRef = doc(db, "rooms", room.id, "tasks", taskId);
-        await updateDoc(taskRef, { ...editTaskForm });
-        setEditingTask(null);
-        setEditTaskForm({ name: "", description: "" });
+        try {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                await updateTask(taskId, { 
+                    ...task, 
+                    name: editTaskForm.name, 
+                    description: editTaskForm.description 
+                });
+                
+                // Refresh tasks
+                const tasksData = await getTasksByRoomId(room.id);
+                setTasks(tasksData);
+            }
+            
+            setEditingTask(null);
+            setEditTaskForm({ name: "", description: "" });
+        } catch (error) {
+            console.error("Error updating task:", error);
+            alert("Failed to update task.");
+        }
     };
+
+    if (isLoading) {
+        return <div className="dashboard-container">Loading tasks...</div>;
+    }
 
     return (
         <div className="dashboard-container">
@@ -130,10 +228,10 @@ const TaskDashboard = ({ room, goBack }) => {
                                 <div>
                                     <strong>Assigned:</strong>
                                     <ul>
-                                        {(task.assigned || []).map((person, idx) => (
+                                        {(assignees[task.id] || []).map((email, idx) => (
                                             <li key={idx}>
-                                                {typeof person === 'string' ? person : `${person.name} (${person.email})`}
-                                                <button onClick={() => handleRemoveAssigned(task.id, idx)}>❌</button>
+                                                {email}
+                                                <button onClick={() => handleRemoveAssigned(task.id, email)}>❌</button>
                                             </li>
                                         ))}
                                     </ul>
@@ -143,12 +241,12 @@ const TaskDashboard = ({ room, goBack }) => {
                     </div>
                     <div className="card-actions">
                         <button className="complete-btn" onClick={() => handleComplete(task.id)}>Complete</button>
+                        <button className="delete-btn" onClick={() => handleDelete(task.id)}>Delete</button>
                         <button className="assign-btn" onClick={() => setShowForm(task.id)}>Assign</button>
                         {editingTask !== task.id && (
                             <button className="edit-btn" onClick={() => handleEditTask(task)}>Edit</button>
                         )}
                     </div>
-
                 </div>
             ))}
 

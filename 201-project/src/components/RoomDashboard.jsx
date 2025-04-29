@@ -1,20 +1,26 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "../dashboard.css";
 
-const RoomDashboard = ({ rooms, onSelectRoom, updateRoom, deleteRoom }) => {
+const RoomDashboard = ({ rooms, updateRoom, deleteRoom }) => {
+  const navigate = useNavigate();
+  
+  const viewTasks = (roomId) => {
+    navigate(`/tasks/${roomId}`);
+  };
+  
   return (
     <div className="dashboard-container">
-      <h2 className="dashboard-title">Room Dashboard</h2>
       {rooms.map((room) => (
         <div className="card" key={room.id}>
           <div>
             <p><strong>{room.name}</strong></p>
-            <p>Leader: {room.leader}</p>
+            <p>Leader: {room.leaderEmail}</p>
           </div>
           <div className="card-actions">
             <button
               className="complete-btn"
-              onClick={() => onSelectRoom(room)}
+              onClick={() => viewTasks(room.id)}
             >
               View Tasks
             </button>
