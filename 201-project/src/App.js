@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, NavLink, Navigate } from "react-router-dom";
 import RoomPage from "./pages/RoomPage";
 import TaskPage from "./pages/TaskPage";
-import FriendPage from "./pages/FriendPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import "./dashboard.css";
@@ -29,8 +28,7 @@ function App() {
         {isLoggedIn ? (
           <>
             <NavLink to="/rooms" className={({ isActive }) => isActive ? "active" : ""}>Rooms</NavLink>
-            <NavLink to="/friends" className={({ isActive }) => isActive ? "active" : ""}>Friends</NavLink>
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
+            <button onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>
@@ -44,7 +42,6 @@ function App() {
         <Route path="/register" element={isLoggedIn ? <Navigate to="/rooms" /> : <RegisterPage setIsLoggedIn={setIsLoggedIn} />} />
         <Route path="/rooms" element={isLoggedIn ? <RoomPage /> : <Navigate to="/login" />} />
         <Route path="/tasks/:roomId" element={isLoggedIn ? <TaskPage /> : <Navigate to="/login" />} />
-        <Route path="/friends" element={isLoggedIn ? <FriendPage /> : <Navigate to="/login" />} />
         <Route path="/" element={<Navigate to={isLoggedIn ? "/rooms" : "/login"} />} />
       </Routes>
     </Router>

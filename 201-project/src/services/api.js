@@ -94,7 +94,18 @@ export const deleteRoom = async (roomId) => {
   if (!response.ok) {
     throw new Error('Failed to delete room');
   }
-  return response.json();
+  
+  // Handle empty or non-JSON responses
+  if (response.status === 204) {
+    return null; // No content response
+  }
+  
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    return null; // Not JSON, return null
+  }
 };
 
 export const getRoomMembers = async (roomId) => {
@@ -169,7 +180,18 @@ export const deleteTask = async (taskId) => {
   if (!response.ok) {
     throw new Error('Failed to delete task');
   }
-  return response.json();
+  
+  // Handle empty or non-JSON responses
+  if (response.status === 204) {
+    return null; // No content response
+  }
+  
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    return null; // Not JSON, return null
+  }
 };
 
 export const getTaskAssignees = async (taskId) => {
@@ -196,35 +218,6 @@ export const removeUserFromTask = async (taskId, userEmail) => {
   });
   if (!response.ok) {
     throw new Error('Failed to remove user from task');
-  }
-  return response.json();
-};
-
-// Friend APIs
-export const getFriends = async (userEmail) => {
-  const response = await fetch(`${API_BASE_URL}/friends/${userEmail}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch friends');
-  }
-  return response.json();
-};
-
-export const addFriend = async (userEmail, friendEmail) => {
-  const response = await fetch(`${API_BASE_URL}/friends/add?userEmail=${userEmail}&friendEmail=${friendEmail}`, {
-    method: 'POST',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to add friend');
-  }
-  return response.json();
-};
-
-export const removeFriend = async (userEmail, friendEmail) => {
-  const response = await fetch(`${API_BASE_URL}/friends/remove?userEmail=${userEmail}&friendEmail=${friendEmail}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to remove friend');
   }
   return response.json();
 }; 
