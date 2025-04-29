@@ -5,6 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.csci201team12.FinalProjectTeam12.User.UserRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,6 +22,12 @@ public class RoomController {
     
     @Autowired
     private RoomMemberRepository roomMemberRepository;
+    
+    @Autowired
+    private RoomInvitationRepository invitationRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     // Get all rooms
     @GetMapping
@@ -147,5 +156,92 @@ public class RoomController {
         roomMemberRepository.deleteByRoomIdAndUserEmail(id, userEmail);
         
         return ResponseEntity.ok("Member removed successfully");
+    }
+    
+    // ROOM INVITATION ENDPOINTS
+    
+    // Send invitation to user - support both GET and POST methods
+    @PostMapping("/{id}/invitations")
+    public ResponseEntity<?> inviteUserPost(@PathVariable Long id, 
+                                         @RequestParam String inviterEmail, 
+                                         @RequestParam String inviteeEmail) {
+        return processInvitation(id, inviterEmail, inviteeEmail);
+    }
+    
+    @GetMapping("/{id}/invitations")
+    public ResponseEntity<?> inviteUserGet(@PathVariable Long id, 
+                                        @RequestParam String inviterEmail,
+                                        @RequestParam String inviteeEmail) {
+        return processInvitation(id, inviterEmail, inviteeEmail);
+    }
+    
+    private ResponseEntity<?> processInvitation(Long id, String inviterEmail, String inviteeEmail) {
+        // Check if room exists
+        if (!roomRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Room not found");
+        }
+        
+        // Check if inviter is a member of the room
+        if (!roomMemberRepository.existsByRoomIdAndUserEmail(id, inviterEmail)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You must be a member of the room to invite others");
+        }
+        
+        // Check if invitee exists
+        if (!userRepository.existsByEmail(inviteeEmail)) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invited user does not exist");
+        }
+        
+        // Check if user is already a member
+        if (roomMemberRepository.existsByRoomIdAndUserEmail(id, inviteeEmail)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User is already a member of this room");
+        }
+        
+        // Check if there's already a pending invitation
+        if (invitationRepository.existsByRoomIdAndInviteeEmailAndAcceptedIsNull(id, inviteeEmail)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User already has a pending invitation");
+        }
+        
+        // Create invitation
+        RoomInvitation invitation = new RoomInvitation(id, inviterEmail, inviteeEmail);
+        invitationRepository.save(invitation);
+        
+        return ResponseEntity.status(HttpStatus.CREATED).body("Invitation sent successfully");
+    }
+    
+    // Get pending invitations for a user
+    @GetMapping("/invitations")
+    public ResponseEntity<List<RoomInvitation>> getPendingInvitations(@RequestParam String userEmail) {
+        List<RoomInvitation> invitations = invitationRepository.findByInviteeEmailAndAcceptedIsNull(userEmail);
+        return ResponseEntity.ok(invitations);
+    }
+    
+    // Respond to invitation
+    @PutMapping("/invitations/{id}")
+    public ResponseEntity<?> respondToInvitation(@PathVariable Long id, @RequestParam Boolean accepted) {
+        Optional<RoomInvitation> invitationOpt = invitationRepository.findById(id);
+        
+        if (!invitationOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invitation not found");
+        }
+        
+        RoomInvitation invitation = invitationOpt.get();
+        
+        // Check if invitation has already been responded to
+        if (invitation.getAccepted() != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Invitation has already been responded to");
+        }
+        
+        invitation.setAccepted(accepted);
+        invitation.setRespondedAt(LocalDateTime.now());
+        invitationRepository.save(invitation);
+        
+        // If accepted, add user to room
+        if (accepted) {
+            RoomMember member = new RoomMember(invitation.getRoomId(), invitation.getInviteeEmail());
+            roomMemberRepository.save(member);
+            return ResponseEntity.ok("Invitation accepted and user added to room");
+        } else {
+            return ResponseEntity.ok("Invitation declined");
+        }
     }
 } 

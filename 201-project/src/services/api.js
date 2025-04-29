@@ -136,6 +136,51 @@ export const removeRoomMember = async (roomId, userEmail) => {
   return response.json();
 };
 
+// Room Invitation APIs
+export const inviteUserToRoom = async (roomId, inviterEmail, inviteeEmail) => {
+  const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/invitations?inviterEmail=${inviterEmail}&inviteeEmail=${inviteeEmail}`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to send invitation');
+  }
+  
+  // Check if response is JSON or plain text
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    // For non-JSON responses like "Invitation sent successfully"
+    return response.text();
+  }
+};
+
+export const getPendingInvitations = async (userEmail) => {
+  const response = await fetch(`${API_BASE_URL}/rooms/invitations?userEmail=${userEmail}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch pending invitations');
+  }
+  return response.json();
+};
+
+export const respondToInvitation = async (invitationId, accepted) => {
+  const response = await fetch(`${API_BASE_URL}/rooms/invitations/${invitationId}?accepted=${accepted}`, {
+    method: 'PUT',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to respond to invitation');
+  }
+  
+  // Check if response is JSON or plain text
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    // For non-JSON responses like "Invitation accepted and user added to room"
+    return response.text();
+  }
+};
+
 // Task APIs
 export const getTasksByRoomId = async (roomId) => {
   const response = await fetch(`${API_BASE_URL}/tasks/room/${roomId}`);

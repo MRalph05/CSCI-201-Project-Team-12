@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import RoomDashboard from "../components/RoomDashboard";
+import InvitationList from "../components/InvitationList";
+import RoomDetails from "../components/RoomDetails";
 import { 
     getAllRooms,
     getRoomsByLeader,
@@ -8,6 +10,20 @@ import {
     updateRoom,
     deleteRoom
 } from "../services/api";
+import { 
+    Container,
+    Grid,
+    Typography,
+    Box,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    CircularProgress,
+    Alert
+} from '@mui/material';
 
 const RoomPage = () => {
     const [rooms, setRooms] = useState([]);
@@ -15,6 +31,7 @@ const RoomPage = () => {
     const [roomForm, setRoomForm] = useState({ name: "", leaderEmail: "" });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [selectedRoomId, setSelectedRoomId] = useState(null);
 
     const fetchRooms = async () => {
         try {
@@ -107,7 +124,7 @@ const RoomPage = () => {
     };
 
     const handleDeleteRoom = async (roomId) => {
-        if (!window.confirm("Are you sure you want to delete this room?")) {
+        if (!window.confirm("Are you sure you want to delete this room? This action cannot be undone.")) {
             return;
         }
         
@@ -115,6 +132,9 @@ const RoomPage = () => {
             setIsLoading(true);
             await deleteRoom(roomId);
             await fetchRooms();
+            if (selectedRoomId === roomId) {
+                setSelectedRoomId(null);
+            }
             setIsLoading(false);
         } catch (error) {
             console.error("Failed to delete room:", error);
@@ -123,46 +143,100 @@ const RoomPage = () => {
         }
     };
 
-    if (isLoading) {
-        return <div className="dashboard-container">Loading...</div>;
-    }
+    const handleViewRoom = (roomId) => {
+        setSelectedRoomId(roomId);
+    };
 
-    if (error) {
-        return <div className="dashboard-container">Error: {error}</div>;
-    }
+    const handleCloseRoomDetails = () => {
+        setSelectedRoomId(null);
+    };
 
     return (
-        <div className="dashboard-container">
-            <h2 className="dashboard-title">Room Dashboard</h2>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-                <button className="dashboard-button" onClick={() => setShowAddRoom(!showAddRoom)}>+ Add Room</button>
-            </div>
-
-            {showAddRoom && (
-                <div>
-                    <input
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Typography variant="h4" align="center" gutterBottom>
+                Room Dashboard
+            </Typography>
+            
+            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            
+            {/* Invitation List section */}
+            <InvitationList onInvitationResponded={fetchRooms} />
+            
+            <Grid container spacing={3}>
+                <Grid item xs={12} md={selectedRoomId ? 6 : 12}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                        <Typography variant="h5">
+                            Your Rooms
+                        </Typography>
+                        <Button 
+                            variant="contained" 
+                            color="primary"
+                            onClick={() => setShowAddRoom(true)}
+                        >
+                            Create Room
+                        </Button>
+                    </Box>
+                    
+                    {isLoading ? (
+                        <Box display="flex" justifyContent="center" p={3}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <RoomDashboard
+                            rooms={rooms}
+                            onEditRoom={handleUpdateRoom}
+                            onDeleteRoom={handleDeleteRoom}
+                            onViewRoom={handleViewRoom}
+                        />
+                    )}
+                </Grid>
+                
+                {selectedRoomId && (
+                    <Grid item xs={12} md={6}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                            <Typography variant="h5">
+                                Room Details
+                            </Typography>
+                            <Button 
+                                variant="outlined"
+                                onClick={handleCloseRoomDetails}
+                            >
+                                Close
+                            </Button>
+                        </Box>
+                        
+                        <RoomDetails 
+                            roomId={selectedRoomId} 
+                            onRoomUpdated={fetchRooms}
+                        />
+                    </Grid>
+                )}
+            </Grid>
+            
+            {/* Create Room Dialog */}
+            <Dialog open={showAddRoom} onClose={() => setShowAddRoom(false)}>
+                <DialogTitle>Create New Room</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        margin="dense"
+                        label="Room Name"
                         type="text"
-                        placeholder="Room Name"
+                        fullWidth
                         value={roomForm.name}
-                        onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                    /><br />
-                    <input
-                        type="text"
-                        placeholder="Leader Email (optional - defaults to you)"
-                        value={roomForm.leaderEmail}
-                        onChange={(e) => setRoomForm({ ...roomForm, leaderEmail: e.target.value })}
-                    /><br />
-                    <button onClick={handleCreateRoom}>Create</button>
-                    <button onClick={() => setShowAddRoom(false)}>Cancel</button>
-                </div>
-            )}
-
-            <RoomDashboard
-                rooms={rooms}
-                updateRoom={handleUpdateRoom}
-                deleteRoom={handleDeleteRoom}
-            />
-        </div>
+                        onChange={(e) => setRoomForm({...roomForm, name: e.target.value})}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setShowAddRoom(false)} color="secondary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleCreateRoom} color="primary" disabled={isLoading}>
+                        {isLoading ? <CircularProgress size={24} /> : "Create"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Container>
     );
 };
 
