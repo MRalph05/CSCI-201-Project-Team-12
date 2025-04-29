@@ -4,78 +4,64 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @RestController
-@RequestMapping()
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:3000")
 public class LoginController {
+    
+    @Autowired
+    private UserRepository userRepository;
+    
     @PostMapping("/login")
-    public String login(@RequestParam("username") String username, @RequestParam("password") String password) {
-        if(UserManagement.authenticateUser(username, password)){
-            return "success";
+    public ResponseEntity<?> login(@RequestParam("email") String email, @RequestParam("password") String password) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.getPassword().equals(password)) {
+                // Update last login time
+                user.setLastLogin(LocalDateTime.now());
+                userRepository.save(user);
+                
+                return ResponseEntity.ok(user);
+            }
         }
-        else{
-            return "fail";
-        }
+        
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid email or password");
     }
-    public String update(@RequestParam("username") String username, @RequestParam("password") String password) {
-        if(UserManagement.updatePassword(username, password)){
-            return "success";
+    
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Email already exists");
         }
-        else{
-            return "fail";
-        }
+        
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
     }
-//    private boolean isValid(String email, String password) {
-//
-//        PreparedStatement preparedStatement = null;
-//        ResultSet resultSet = null;
-//
-//        try {
-//            Class.forName("com.mysql.cj.jdbc.Driver");
-//            Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/UserData", "root", "Iriganlc");
-//            String sql = "SELECT * FROM UserTable WHERE username = ? AND password = ?";
-//            preparedStatement = con.prepareStatement(sql);
-//            preparedStatement.setString(1, email);
-//            preparedStatement.setString(2, password);
-//
-//            resultSet = preparedStatement.executeQuery();
-//            if (resultSet.next()) {
-//                try {
-//                    if (resultSet != null)
-//                        resultSet.close();
-//                    if (preparedStatement != null)
-//                        preparedStatement.close();
-//                    if (con != null)
-//                        con.close();
-//                } catch (SQLException e) {
-//                    e.printStackTrace();
-//                }
-//                return true;
-//            } else {
-//                try {
-//                    if (resultSet != null)
-//                        resultSet.close();
-//                    if (preparedStatement != null)
-//                        preparedStatement.close();
-//                    if (con != null)
-//                        con.close();
-//                } catch (SQLException e) {
-//                    e.printStackTrace();
-//                }
-//                return false;
-//            }
-//
-//        }
-//        catch(ClassNotFoundException e)  {
-//            e.printStackTrace();
-//            return false;
-//        }
-//        catch (SQLException e) {
-//            e.printStackTrace();
-//            return false;
-//        }
-//
-//    }
-
+    
+    @PutMapping("/update-password")
+    public ResponseEntity<?> updatePassword(
+            @RequestParam("email") String email, 
+            @RequestParam("currentPassword") String currentPassword,
+            @RequestParam("newPassword") String newPassword) {
+        
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (user.getPassword().equals(currentPassword)) {
+                user.setPassword(newPassword);
+                userRepository.save(user);
+                return ResponseEntity.ok("Password updated successfully");
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Current password is incorrect");
+            }
+        }
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+    }
 }
