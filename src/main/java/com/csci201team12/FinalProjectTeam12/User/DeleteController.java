@@ -4,17 +4,23 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import java.sql.*;
+
 @RestController
-@RequestMapping()
+@RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:3000")
 public class DeleteController {
+    @Autowired
+    private UserManagement userManagement;
+
     @PostMapping("/deleteUser")
-    public String deleteU(@RequestParam String username){
-        if(UserManagement.deleteUser(username)){
-            return "User deleted successfully";
+    ResponseEntity<String> deleteUser(@RequestParam("email") String email) {
+        if(userManagement.deleteUser(email)) {
+            return new ResponseEntity<>("User deleted successfully", HttpStatus.OK);
         }
         else{
-            return "User could not be deleted";
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
         }
     }
-    
+
+
 }
