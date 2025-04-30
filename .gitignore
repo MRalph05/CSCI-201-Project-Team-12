@@ -1,2 +1,2 @@
-echo "data/" >> .gitignore
-echo "target/" >> .gitignore
+target/
+data/
