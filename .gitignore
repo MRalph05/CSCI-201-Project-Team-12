@@ -1,1 +1,2 @@
-.DS_Store
+echo "data/" >> .gitignore
+echo "target/" >> .gitignore

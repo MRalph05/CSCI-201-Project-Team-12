@@ -13,13 +13,13 @@ export const loginUser = async (email, password) => {
 };
 
 export const registerUser = async (userData) => {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  const { firstName, lastName, email, password } = userData;
+  const url = `${API_BASE_URL}/auth/register?firstname=${encodeURIComponent(firstName)}&lastname=${encodeURIComponent(lastName)}&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+  
+  const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(userData),
   });
+  
   if (!response.ok) {
     throw new Error('Registration failed');
   }

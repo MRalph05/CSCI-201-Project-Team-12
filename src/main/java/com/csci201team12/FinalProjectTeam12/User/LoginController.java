@@ -14,7 +14,10 @@ public class LoginController {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
     private UserManagement userManagement;
+    
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestParam("email") String email, @RequestParam("password") String password) {
 //        Optional<User> userOpt = userRepository.findByEmail(email);
