@@ -14,7 +14,7 @@ const TaskDashboard = ({ room, goBack }) => {
     const [tasks, setTasks] = useState([]);
     const [assignees, setAssignees] = useState({});
     const [showForm, setShowForm] = useState(null);
-    const [formData, setFormData] = useState({ name: "", email: "" });
+    const [formData, setFormData] = useState({ email: "" });
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newTask, setNewTask] = useState({ name: "", description: "" });
     const [editingTask, setEditingTask] = useState(null);
@@ -58,7 +58,7 @@ const TaskDashboard = ({ room, goBack }) => {
                 [taskId]: updatedAssignees
             });
             
-            setFormData({ name: "", email: "" });
+            setFormData({ email: "" });
             setShowForm(null);
         } catch (error) {
             console.error("Error assigning task:", error);
@@ -253,13 +253,6 @@ const TaskDashboard = ({ room, goBack }) => {
             {showForm && (
                 <div className="dashboard-container" style={{ background: "#fff8" }}>
                     <h3>Assign Roommate to Task</h3>
-                    <input
-                        type="text"
-                        placeholder="Name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                    <br />
                     <input
                         type="email"
                         placeholder="Email"

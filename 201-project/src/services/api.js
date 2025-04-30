@@ -254,7 +254,15 @@ export const assignUserToTask = async (taskId, userEmail) => {
   if (!response.ok) {
     throw new Error('Failed to assign user to task');
   }
-  return response.json();
+  
+  // Handle empty or non-JSON responses
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    // For non-JSON responses like "User assigned to task successfully"
+    return response.text();
+  }
 };
 
 export const removeUserFromTask = async (taskId, userEmail) => {
@@ -264,5 +272,13 @@ export const removeUserFromTask = async (taskId, userEmail) => {
   if (!response.ok) {
     throw new Error('Failed to remove user from task');
   }
-  return response.json();
+  
+  // Handle empty or non-JSON responses
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    return response.json();
+  } else {
+    // For non-JSON responses like "User removed from task successfully"
+    return response.text();
+  }
 }; 
