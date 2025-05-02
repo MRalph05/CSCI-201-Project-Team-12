@@ -102,15 +102,11 @@
   
   
   .card {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    background-color: #f9fafb;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid #d1d5db;
+    background-color: #fff;
     border-radius: 8px;
-    flex-wrap: wrap;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
   
   .card > div {
@@ -119,9 +115,9 @@
   
   .card-actions {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
+    justify-content: flex-start;
+    margin-top: 10px;
+    gap: 5px;
   }
   
   .card-actions .complete-btn,
@@ -276,4 +272,31 @@
   	transform: translateX(0);
   	opacity: 1;
   	}
+}
+
+.completed-task {
+    background-color: #f8fff8;
+    border-left: 4px solid #4CAF50;
+    opacity: 0.8;
+}
+
+.completed-checkmark {
+    color: #4CAF50;
+    font-size: 24px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.button-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.empty-message {
+    text-align: center;
+    margin: 30px 0;
+    color: #666;
+    font-style: italic;
 }

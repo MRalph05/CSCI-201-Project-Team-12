@@ -20,6 +20,7 @@ const TaskDashboard = ({ room, goBack }) => {
     const [editingTask, setEditingTask] = useState(null);
     const [editTaskForm, setEditTaskForm] = useState({ name: "", description: "" });
     const [isLoading, setIsLoading] = useState(false);
+    const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
     // Fetch tasks when the room changes
     useEffect(() => {
@@ -170,6 +171,9 @@ const TaskDashboard = ({ room, goBack }) => {
             alert("Failed to update task.");
         }
     };
+    
+    // Filter tasks based on completion status
+    const filteredTasks = tasks.filter(task => task.completed === showCompletedTasks);
 
     if (isLoading) {
         return <div className="dashboard-container">Loading tasks...</div>;
@@ -178,8 +182,17 @@ const TaskDashboard = ({ room, goBack }) => {
     return (
         <div className="dashboard-container">
             <h2 className="dashboard-title">Tasks for {room.name}</h2>
-            <button className="dashboard-button" onClick={goBack}>← Back to Rooms</button>
-            <button className="dashboard-button" onClick={() => setShowCreateForm(!showCreateForm)}>+ Create Task</button>
+            <div className="button-row">
+                <button className="dashboard-button" onClick={goBack}>← Back to Rooms</button>
+                <button className="dashboard-button" onClick={() => setShowCreateForm(!showCreateForm)}>+ Create Task</button>
+                <button 
+                    className="dashboard-button" 
+                    onClick={() => setShowCompletedTasks(!showCompletedTasks)}
+                    style={{ backgroundColor: showCompletedTasks ? '#4CAF50' : '#2563eb' }}
+                >
+                    {showCompletedTasks ? "View Active Tasks" : "View Completed Tasks"}
+                </button>
+            </div>
 
             {showCreateForm && (
                 <div className="dashboard-container" style={{ background: "#fff8" }}>
@@ -202,9 +215,17 @@ const TaskDashboard = ({ room, goBack }) => {
                     <button className="delete-btn" onClick={() => setShowCreateForm(false)}>Cancel</button>
                 </div>
             )}
+            
+            {filteredTasks.length === 0 && (
+                <div className="empty-message">
+                    {showCompletedTasks 
+                        ? "No completed tasks yet." 
+                        : "No active tasks. Create a new task to get started."}
+                </div>
+            )}
 
-            {tasks.map((task) => (
-                <div className="card" key={task.id}>
+            {filteredTasks.map((task) => (
+                <div className={`card ${task.completed ? 'completed-task' : ''}`} key={task.id}>
                     <div>
                         {editingTask === task.id ? (
                             <>
@@ -231,7 +252,9 @@ const TaskDashboard = ({ room, goBack }) => {
                                         {(assignees[task.id] || []).map((email, idx) => (
                                             <li key={idx}>
                                                 {email}
-                                                <button onClick={() => handleRemoveAssigned(task.id, email)}>❌</button>
+                                                {!task.completed && (
+                                                    <button onClick={() => handleRemoveAssigned(task.id, email)}>❌</button>
+                                                )}
                                             </li>
                                         ))}
                                     </ul>
@@ -240,11 +263,20 @@ const TaskDashboard = ({ room, goBack }) => {
                         )}
                     </div>
                     <div className="card-actions">
-                        <button className="complete-btn" onClick={() => handleComplete(task.id)}>Complete</button>
-                        <button className="delete-btn" onClick={() => handleDelete(task.id)}>Delete</button>
-                        <button className="assign-btn" onClick={() => setShowForm(task.id)}>Assign</button>
-                        {editingTask !== task.id && (
-                            <button className="edit-btn" onClick={() => handleEditTask(task)}>Edit</button>
+                        {!task.completed ? (
+                            <>
+                                <button className="complete-btn" onClick={() => handleComplete(task.id)}>Complete</button>
+                                <button className="delete-btn" onClick={() => handleDelete(task.id)}>Delete</button>
+                                <button className="assign-btn" onClick={() => setShowForm(task.id)}>Assign</button>
+                                {editingTask !== task.id && (
+                                    <button className="edit-btn" onClick={() => handleEditTask(task)}>Edit</button>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <span className="completed-checkmark">✓</span>
+                                <button className="delete-btn" onClick={() => handleDelete(task.id)}>Delete</button>
+                            </>
                         )}
                     </div>
                 </div>
