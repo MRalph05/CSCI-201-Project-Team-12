@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const GuestPage = () => {
+	const [guestID, setGuestID] = useState(null);
 	const [tasks, setTasks] = useState([]);
 	const [newTaskName, setNewTaskName] = useState("");
 	const [newTaskDescription, setNewTaskDescription] = useState("");
@@ -8,15 +9,31 @@ const GuestPage = () => {
 	const [isDisabled, setIsDisabled] =useState(false);
 	const [completeActionCompleted, setCompleteActionCompleted] = useState(false);
 	const [deleteActionCompleted, setDeleteActionCompleted] = useState(false);
-		
-	const addTask = () => {
-		if (!newTaskName.trim()) return;
-		const newTask = {
-			name: newTaskName,
-			description: newTaskDescription,
-			completed: false
+	
+	useEffect(() => {
+		const initialize = async () => {
+			const res = await fetch("http://localhost:8080/guest/create", { method: "POST" });
+			const data = await res.json();
+			setGuestID(data.guestID);
+			fetchTasks(data.guestID);
 		};
-		setTasks([...tasks, newTask]);
+		initialize();
+	}, []);
+	
+	const fetchTasks = async (id) => {
+		const res = await fetch(`http://localhost:8080/guest/tasks?guestID=${id}`);
+		const data = await res.json();
+		setTasks(data.map(name => ({ name, completed: false })));
+	};
+
+	const addTask = async () => {
+		if (!newTaskName.trim()) return;
+
+		await fetch(`http://localhost:8080/guest/createTask?guestID=${guestID}&taskName=${encodeURIComponent(newTaskName)}`, {
+			method: "POST"
+		});
+		
+		await fetchTasks(guestID);
 		setNewTaskName("");
 		setNewTaskDescription("");
 		setTaskCreated(true);
@@ -27,14 +44,26 @@ const GuestPage = () => {
 		const updatedTasks = [...tasks];
 		updatedTasks[index].completed = true;
 		setTasks(updatedTasks);
-		if (!completeActionCompleted) setCompleteActionCompleted(true);
+		setCompleteActionCompleted(true);
 	};
 	
-	const deleteTask = (index) => {
-		const updatedTasks = tasks.filter((_, i) => i != index);
-		setTasks(updatedTasks);
-		if (!deleteActionCompleted) setDeleteActionCompleted(true);
+	const deleteTask = async (index) => {
+		const taskName = tasks[index].name;
+		await fetch(`http://localhost:8080/guest/deleteTask?guestID=${guestID}&taskName=${encodeURIComponent(taskName)}`, {
+			method: "POST"
+		});
+
+		await fetchTasks(guestID);
+		setDeleteActionCompleted(true);
 	};
+	
+	const addTutorialTask = async () => {
+		await fetch(`http://localhost:8080/guest/addTutorialTask?guestID=${guestID}`, {
+			method: "POST"
+		});
+		
+		await fetchTasks(guestID);
+	}
 	
 	return (
 		<div className="dashboard-container">

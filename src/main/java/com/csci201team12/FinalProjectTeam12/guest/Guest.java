@@ -1,29 +1,44 @@
 package com.csci201team12.FinalProjectTeam12.guest;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "guests")
 public class Guest {
-    int guestID;
 
-    Guest() {
-        // TODO: create new entry in database, guestID == lastID + 1
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int guestID;
+
+    private Integer guestRoomID;
+
+    @Column(length = 1000)
+    private String guestTasks;
+
+    // Getter and Setter for guestID
+    public int getGuestID() {
+        return guestID;
     }
 
-    void createTask(String taskName) {
-        // TODO
+    public void setGuestID(int guestID) {
+        this.guestID = guestID;
     }
 
-    void completeTask(String taskName) {
-        // TODO
+    // Getter and Setter for guestRoomID
+    public Integer getGuestRoomID() {
+        return guestRoomID;
     }
 
-    void createRoom() {
-        // TODO
+    public void setGuestRoomID(Integer guestRoomID) {
+        this.guestRoomID = guestRoomID;
     }
 
-    void deleteDuest() {
-        // TODO
+    // Getter and Setter for guestTasks
+    public String getGuestTasks() {
+        return guestTasks;
     }
 
-    void addTutorialTask() {
-        // TODO: predefined task
+    public void setGuestTasks(String guestTasks) {
+        this.guestTasks = guestTasks;
     }
 }
