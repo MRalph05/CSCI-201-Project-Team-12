@@ -21,7 +21,6 @@ public class GuestService {
     public void createTask(int guestID, String taskName) {
         Guest guest = getGuestOrThrow(guestID);
         String current = guest.getGuestTasks();
-//        if (!current.isEmpty()) current += ",";
         if(current!=null && Arrays.asList(current.split(",")).contains(taskName)) {
             throw new IllegalArgumentException("Task name already exists");
         }
@@ -31,27 +30,21 @@ public class GuestService {
         else{
             guest.setGuestTasks(current+","+taskName);
         }
-//        guest.setGuestTasks(current + taskName);
         guestRepo.save(guest);
     }
-    private String removeTask(String tasks, String task){
-        return Arrays.stream(tasks.split(",")).map(String::trim).collect(Collectors.joining(","));
+    
+    private String removeTask(String tasks, String taskToRemove){
+        return Arrays.stream(tasks.split(",")).map(String::trim).filter(task -> !task.equals(taskToRemove)).collect(Collectors.joining(","));	
     }
 
     public void completeTask(int guestID, String taskName) {
         Guest guest = getGuestOrThrow(guestID);
-//        String updatedTasks = Arrays.stream(guest.getGuestTasks().split(","))
-//                .filter(task -> !task.trim().equals(taskName))
-//                .collect(Collectors.joining(","));
         guest.setGuestTasks(removeTask(guest.getGuestTasks(), taskName));
         guestRepo.save(guest);
     }
     
     public void deleteTask(int guestID, String taskName) {
         Guest guest = getGuestOrThrow(guestID);
-//        String updatedTasks = Arrays.stream(guest.getGuestTasks().split(","))
-//                .filter(task -> !task.trim().equals(taskName))
-//                .collect(Collectors.joining(","));
         guest.setGuestTasks(removeTask(guest.getGuestTasks(), taskName));
         guestRepo.save(guest);
     }
