@@ -127,13 +127,34 @@ export const addRoomMember = async (roomId, userEmail) => {
 };
 
 export const removeRoomMember = async (roomId, userEmail) => {
-  const response = await fetch(`${API_BASE_URL}/rooms/${roomId}/members?userEmail=${userEmail}`, {
-    method: 'DELETE',
-  });
-  if (!response.ok) {
-    throw new Error('Failed to remove member from room');
+  try {
+    // Make sure the email is properly encoded for a URL
+    const encodedEmail = encodeURIComponent(userEmail);
+    const url = `${API_BASE_URL}/rooms/${roomId}/members?userEmail=${encodedEmail}`;
+    
+    console.log("Removing member with URL:", url); // Debug log
+    
+    const response = await fetch(url, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("Server error response:", errorBody);
+      throw new Error(`Failed to remove member from room: ${response.status} ${errorBody}`);
+    }
+    
+    // Handle text responses like "Member removed successfully"
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    } else {
+      return response.text();
+    }
+  } catch (error) {
+    console.error("Error in removeRoomMember:", error);
+    throw error;
   }
-  return response.json();
 };
 
 // Room Invitation APIs
